@@ -122,7 +122,15 @@ export async function dispatchInboundToAiReply(
         max_replies: config.autoReplyMaxPerConversation,
       },
     )
-    if (claimErr || claimed !== true) return
+    if (claimErr) {
+      // A real error here (vs. losing the cap race) is almost always a
+      // deploy issue — e.g. `claim_ai_reply_slot` not EXECUTE-able by the
+      // service role, or the migration not applied. Log it loudly: a
+      // silent return makes "auto-reply never fires" undiagnosable.
+      console.error('[ai auto-reply] claim_ai_reply_slot failed:', claimErr)
+      return
+    }
+    if (claimed !== true) return // lost the per-conversation cap race
 
     await engineSendText({
       accountId,
