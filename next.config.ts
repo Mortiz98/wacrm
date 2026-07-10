@@ -61,6 +61,7 @@ const SECURITY_HEADERS = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["linguiform-warningly-gillian.ngrok-free.dev"],
   /**
    * Cache-Control policy.
    *
