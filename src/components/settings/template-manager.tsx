@@ -889,8 +889,8 @@ export function TemplateManager() {
                       <Input
                         key={i}
                         id={inputId}
-                        aria-label={t('sampleAria', { var: `{{${i + 1}}}` })}
-                        placeholder={t('samplePlaceholder', { var: `{{${i + 1}}}` })}
+                        aria-label={t('sampleAria', { var: `{${i + 1}}` })}
+                        placeholder={t('samplePlaceholder', { var: `{${i + 1}}` })}
                         value={val}
                         onChange={(e) => {
                           const next = [...form.body_samples];

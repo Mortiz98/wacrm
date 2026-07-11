@@ -284,7 +284,7 @@ export function TemplatePicker({
                     next[i] = e.target.value;
                     setParams(next);
                   }}
-                  placeholder={t("bodyValuePlaceholder", { val: `{{${v}}}` })}
+                  placeholder={t("bodyValuePlaceholder", { val: `{${v}}` })}
                   className="border-border bg-muted text-foreground placeholder:text-muted-foreground"
                 />
               </div>
