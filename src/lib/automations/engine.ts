@@ -104,6 +104,21 @@ export async function runAutomationsForTrigger(input: DispatchInput): Promise<vo
 
     for (const automation of automations as Automation[]) {
       if (!triggerMatches(automation, input.context)) continue
+
+      if (input.contactId) {
+        const { data: existingLog } = await db
+          .from('automation_logs')
+          .select('id')
+          .eq('automation_id', automation.id)
+          .eq('contact_id', input.contactId)
+          .limit(1)
+          .maybeSingle()
+        if (existingLog) {
+          console.log('[automations] already fired for contact, skipping', automation.id, input.contactId)
+          continue
+        }
+      }
+
       try {
         await executeAutomation(automation, input)
       } catch (err) {
