@@ -107,18 +107,25 @@ export async function runAutomationsForTrigger(input: DispatchInput): Promise<vo
       if (!triggerMatches(automation, input.context)) continue
 
       if (input.contactId) {
-        const { data: existingLog } = await db
+        const { data: existingLogs } = await db
           .from('automation_logs')
-          .select('id')
+          .select('steps_executed')
           .eq('automation_id', automation.id)
           .eq('contact_id', input.contactId)
-          .limit(1)
-          .maybeSingle()
-        if (existingLog) {
-          console.log('[automations] already fired for contact, skipping', automation.id, input.contactId)
-          continue
+          if (existingLogs) {
+            const sentMessage = existingLogs.some((log: { steps_executed: unknown }) => {
+              const steps = log.steps_executed
+              if (!Array.isArray(steps)) return false
+              return steps.some((s: { step_type?: string; status?: string }) =>
+                s.step_type === 'send_message' && s.status === 'success'
+              )
+            })
+            if (sentMessage) {
+              console.log('[automations] already fired for contact, skipping', automation.id, input.contactId)
+              continue
+            }
+          }
         }
-      }
 
       try {
         await executeAutomation(automation, input)
