@@ -53,21 +53,42 @@ export function parseContactCsv(text: string): ParseContactCsvResult {
     .split(',')
     .map((h) => h.trim().toLowerCase().replace(/["']/g, ''));
 
-  const phoneIdx = headers.indexOf('phone');
+  // Standard columns with aliases for Spanish/CRM variants
+  const phoneAliases = ['phone', 'telefono', 'teléfono', 'cli_telefono', 'telefono_cliente'];
+  const nameAliases = ['name', 'nombre', 'cli_nombre'];
+  const emailAliases = ['email', 'correo', 'cli_email', 'email_cliente'];
+  const companyAliases = ['company', 'empresa', 'cli_empresa'];
+  const tagsAliases = ['tags', 'etiquetas'];
+
+  const findHeader = (aliases: string[]): number => {
+    for (const alias of aliases) {
+      const idx = headers.indexOf(alias);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+
+  const phoneIdx = findHeader(phoneAliases);
   if (phoneIdx === -1) {
     return { rows: [], hasTagsColumn: false, hasCompanyColumn: false, customFieldColumns: [] };
   }
 
-  const nameIdx = headers.indexOf('name');
-  const emailIdx = headers.indexOf('email');
-  const companyIdx = headers.indexOf('company');
-  const tagsIdx = headers.indexOf('tags');
+  const nameIdx = findHeader(nameAliases);
+  const emailIdx = findHeader(emailAliases);
+  const companyIdx = findHeader(companyAliases);
+  const tagsIdx = findHeader(tagsAliases);
 
-  const standardHeaders = new Set(['phone', 'name', 'email', 'company', 'tags']);
+  const allStandardAliases = new Set([
+    ...phoneAliases,
+    ...nameAliases,
+    ...emailAliases,
+    ...companyAliases,
+    ...tagsAliases,
+  ]);
   const customFieldColumns: string[] = [];
   const customFieldIdx: { index: number; name: string }[] = [];
   for (let i = 0; i < headers.length; i++) {
-    if (!standardHeaders.has(headers[i]) && headers[i]) {
+    if (!allStandardAliases.has(headers[i]) && headers[i]) {
       customFieldColumns.push(headers[i]);
       customFieldIdx.push({ index: i, name: headers[i] });
     }
