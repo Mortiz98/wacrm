@@ -95,6 +95,7 @@ export async function runAutomationsForTrigger(input: DispatchInput): Promise<vo
       .eq('account_id', input.accountId)
       .eq('trigger_type', input.triggerType)
       .eq('is_active', true)
+      .order('name', { ascending: true })
 
     if (error) {
       console.error('[automations] fetch failed:', error)
