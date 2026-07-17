@@ -82,14 +82,14 @@ export async function POST(request: Request) {
     .select('id, phone_normalized')
     .eq('account_id', accountId)
 
-  const existingPhones = new Set(
-    (existingContacts ?? [])
-      .map((c: { phone_normalized: string | null }) => c.phone_normalized)
-      .filter((p): p is string => !!p)
-  )
+  // Map of normalized phone -> contact id for existing contacts
+  const existingContactByPhone = new Map<string, string>()
+  for (const c of (existingContacts ?? []) as { id: string; phone_normalized: string | null }[]) {
+    if (c.phone_normalized) existingContactByPhone.set(c.phone_normalized, c.id)
+  }
 
   let imported = 0
-  let skipped = 0
+  let updated = 0
   let failed = 0
   const customValues: { contact_id: string; custom_field_id: string; value: string }[] = []
 
@@ -100,10 +100,6 @@ export async function POST(request: Request) {
     }
 
     const normalized = normalizeKey(row.phone)
-    if (existingPhones.has(normalized)) {
-      skipped++
-      continue
-    }
 
     // Ensure E.164 format
     let phone = row.phone.trim()
@@ -112,6 +108,29 @@ export async function POST(request: Request) {
       phone = '+57' + phone.replace(/^0+/, '')
     }
 
+    const existingId = existingContactByPhone.get(normalized)
+
+    if (existingId) {
+      // Contact already exists — update custom fields (upsert)
+      updated++
+      if (row.plan) {
+        customValues.push({
+          contact_id: existingId,
+          custom_field_id: planFieldId,
+          value: row.plan,
+        })
+      }
+      if (row.fecha_vencimiento) {
+        customValues.push({
+          contact_id: existingId,
+          custom_field_id: fechaFieldId,
+          value: row.fecha_vencimiento,
+        })
+      }
+      continue
+    }
+
+    // New contact — insert
     const { data: contact, error } = await admin
       .from('contacts')
       .insert({
@@ -126,7 +145,24 @@ export async function POST(request: Request) {
 
     if (error) {
       if (isUniqueViolation(error)) {
-        skipped++
+        // Race condition — try to find the existing contact
+        const { data: found } = await admin
+          .from('contacts')
+          .select('id')
+          .eq('account_id', accountId)
+          .eq('phone_normalized', normalized)
+          .maybeSingle()
+        if (found) {
+          updated++
+          if (row.plan) {
+            customValues.push({ contact_id: found.id, custom_field_id: planFieldId, value: row.plan })
+          }
+          if (row.fecha_vencimiento) {
+            customValues.push({ contact_id: found.id, custom_field_id: fechaFieldId, value: row.fecha_vencimiento })
+          }
+        } else {
+          failed++
+        }
       } else {
         failed++
       }
@@ -151,18 +187,20 @@ export async function POST(request: Request) {
     }
   }
 
-  // Batch insert custom values
+  // Batch upsert custom values (insert or update if conflict on contact_id + custom_field_id)
   if (customValues.length > 0) {
     const chunkSize = 50
     for (let i = 0; i < customValues.length; i += chunkSize) {
       const chunk = customValues.slice(i, i + chunkSize)
-      await admin.from('contact_custom_values').insert(chunk)
+      await admin
+        .from('contact_custom_values')
+        .upsert(chunk, { onConflict: 'contact_id,custom_field_id' })
     }
   }
 
   return NextResponse.json({
     imported,
-    skipped,
+    updated,
     failed,
     customFields: {
       plan_mensualidad: planFieldId,
