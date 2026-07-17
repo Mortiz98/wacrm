@@ -49,8 +49,7 @@ export function parseContactCsv(text: string): ParseContactCsvResult {
     return { rows: [], hasTagsColumn: false, hasCompanyColumn: false, customFieldColumns: [] };
   }
 
-  const headers = lines[0]
-    .split(',')
+  const headers = parseCsvLine(lines[0])
     .map((h) => h.trim().toLowerCase().replace(/["']/g, ''));
 
   // Standard columns with aliases for Spanish/CRM variants

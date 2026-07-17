@@ -245,7 +245,7 @@ export function ImportModal({
         onImported();
       }
       if (updated > 0) {
-        toast.info(`${updated} contactos actualizados`);
+        toast.info(t('toastUpdated', { count: updated }));
       }
       if (tagsAssigned > 0) {
         toast.success(t('toastTagsAssigned', { count: tagsAssigned }));
@@ -475,7 +475,7 @@ export function ImportModal({
                 {result.updated > 0 && (
                   <div className="flex items-center gap-1.5 text-sm text-cyan-400">
                     <CheckCircle className="size-4 shrink-0" />
-                    {result.updated} actualizados
+                    {t('resultUpdated', { count: result.updated })}
                   </div>
                 )}
                 {result.failed > 0 && (

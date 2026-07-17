@@ -59,6 +59,8 @@ export interface Account {
   owner_user_id: string;
   created_at: string;
   updated_at: string;
+  /** Default phone country code (e.g. '+57'). Migration 037. */
+  default_country_code: string;
 }
 
 /**
