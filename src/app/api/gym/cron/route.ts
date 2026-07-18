@@ -155,6 +155,8 @@ export async function GET(request: Request) {
 
       for (const v of variants) {
         try {
+          console.log('[gym-cron] sending template to contact', contact.id, 'phone:', v)
+          
           const result = await sendTemplateMessage({
             phoneNumberId: config.phone_number_id,
             accessToken,
@@ -166,6 +168,8 @@ export async function GET(request: Request) {
               body: params,
             },
           })
+          
+          console.log('[gym-cron] template sent successfully, messageId:', result.messageId)
 
           // Store the sent message
           // Find or create conversation
@@ -206,42 +210,52 @@ export async function GET(request: Request) {
           }
 
           if (conversationId) {
+            console.log('[gym-cron] inserting message for contact', contact.id, contact.phone)
+            
             // Build a preview text from the template body variables
             const previewText = `¡Hola ${contactName}! Mañana vence tu plan ${planName} en *KORE GYM CLUB*...`
 
-            const { error: msgErr } = await admin.from('messages').insert({
-              conversation_id: conversationId,
-              sender_type: 'bot',
-              content_type: 'template',
-              content_text: previewText,
-              template_name: TEMPLATE_NAME,
-              message_id: result.messageId,
-              status: 'sent',
-            })
+            try {
+              const { error: msgErr } = await admin.from('messages').insert({
+                conversation_id: conversationId,
+                sender_type: 'bot',
+                content_type: 'template',
+                content_text: previewText,
+                template_name: TEMPLATE_NAME,
+                message_id: result.messageId,
+                status: 'sent',
+              })
 
-            if (msgErr) {
-              console.error('[gym-cron] message insert error:', msgErr.message)
-              // Don't count as sent if we couldn't save to DB
+              if (msgErr) {
+                console.error('[gym-cron] message insert error:', msgErr.message, msgErr.details)
+                // Don't count as sent if we couldn't save to DB
+                continue
+              }
+              
+              console.log('[gym-cron] message inserted successfully for contact', contact.id)
+
+              const { error: convUpdateErr } = await admin
+                .from('conversations')
+                .update({
+                  last_message_text: previewText,
+                  last_message_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', conversationId)
+
+              if (convUpdateErr) {
+                console.error('[gym-cron] conversation update error:', convUpdateErr.message)
+              }
+              
+              // Only count as sent if we successfully saved to DB
+              sentOk = true
+              sent++
+              console.log('[gym-cron] marked as sent for contact', contact.id)
+              break
+            } catch (dbErr) {
+              console.error('[gym-cron] database error for contact', contact.id, dbErr)
               continue
             }
-
-            const { error: convUpdateErr } = await admin
-              .from('conversations')
-              .update({
-                last_message_text: previewText,
-                last_message_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', conversationId)
-
-            if (convUpdateErr) {
-              console.error('[gym-cron] conversation update error:', convUpdateErr.message)
-            }
-            
-            // Only count as sent if we successfully saved to DB
-            sentOk = true
-            sent++
-            break
           } else {
             console.error('[gym-cron] no conversationId for contact', contact.id)
           }
