@@ -43,10 +43,11 @@ export async function GET(request: Request) {
     planFieldByAccount.set(pf.account_id, pf.id)
   }
 
-  // Calculate tomorrow's date
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10) // YYYY-MM-DD
+  // Calculate tomorrow's date in Colombia timezone (UTC-5)
+  const colombiaTime = new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' })
+  const colombiaDate = new Date(colombiaTime)
+  colombiaDate.setDate(colombiaDate.getDate() + 1)
+  const tomorrowStr = colombiaDate.toISOString().slice(0, 10) // YYYY-MM-DD
 
   let sent = 0
   let skipped = 0
