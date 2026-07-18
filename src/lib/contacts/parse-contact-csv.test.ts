@@ -33,6 +33,7 @@ describe('parseContactCsv', () => {
     expect(parseContactCsv(csv)).toEqual({
       hasTagsColumn: true,
       hasCompanyColumn: false,
+      customFieldColumns: [],
       rows: [
         {
           phone: '+15551234567',
@@ -40,6 +41,7 @@ describe('parseContactCsv', () => {
           email: undefined,
           company: undefined,
           tagNames: ['VIP', 'Lead'],
+          customFields: {},
         },
         {
           phone: '+15559876543',
@@ -47,6 +49,7 @@ describe('parseContactCsv', () => {
           email: undefined,
           company: undefined,
           tagNames: ['Customer'],
+          customFields: {},
         },
       ],
     });
@@ -59,6 +62,7 @@ describe('parseContactCsv', () => {
     expect(parseContactCsv(csv)).toEqual({
       hasTagsColumn: false,
       hasCompanyColumn: false,
+      customFieldColumns: [],
       rows: [
         {
           phone: '+15551234567',
@@ -66,6 +70,7 @@ describe('parseContactCsv', () => {
           email: undefined,
           company: undefined,
           tagNames: [],
+          customFields: {},
         },
       ],
     });
