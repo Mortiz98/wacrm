@@ -156,6 +156,7 @@ export async function GET(request: Request) {
           let conversationId = conv?.id
 
           if (!conversationId) {
+            console.log('[gym-cron] creating conversation for contact', contact.id, contact.phone)
             const { data: newConv, error: convErr } = await admin
               .from('conversations')
               .insert({
@@ -166,10 +167,13 @@ export async function GET(request: Request) {
               .select('id')
               .single()
             if (convErr) {
-              console.error('[gym-cron] conversation insert error:', convErr.message)
+              console.error('[gym-cron] conversation insert error:', convErr.message, convErr.details)
             } else if (newConv) {
               conversationId = newConv.id
+              console.log('[gym-cron] created conversation', conversationId)
             }
+          } else {
+            console.log('[gym-cron] found existing conversation', conversationId)
           }
 
           if (conversationId) {
@@ -185,6 +189,8 @@ export async function GET(request: Request) {
 
             if (msgErr) {
               console.error('[gym-cron] message insert error:', msgErr.message)
+              // Don't count as sent if we couldn't save to DB
+              continue
             }
 
             const { error: convUpdateErr } = await admin
@@ -199,13 +205,14 @@ export async function GET(request: Request) {
             if (convUpdateErr) {
               console.error('[gym-cron] conversation update error:', convUpdateErr.message)
             }
+            
+            // Only count as sent if we successfully saved to DB
+            sentOk = true
+            sent++
+            break
           } else {
             console.error('[gym-cron] no conversationId for contact', contact.id)
           }
-
-          sentOk = true
-          sent++
-          break
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err)
           if (!isRecipientNotAllowedError(msg)) {
