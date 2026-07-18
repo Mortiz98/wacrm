@@ -34,6 +34,19 @@ vi.mock("./admin-client", () => {
     }
     if (table === "custom_fields") {
       // account-scoped ownership lookup for a custom field definition
+      // The engine queries by id AND account_id, so return the owned field
+      // only if filters include an eq on id matching ownedCustomField.id
+      const hasIdFilter = ops.filters.some(
+        ([, k, v]) => k === "id" && v === state.ownedCustomField?.id
+      );
+      const hasAccountIdFilter = ops.filters.some(([, k]) => k === "account_id");
+      if (hasIdFilter && hasAccountIdFilter && state.ownedCustomField) {
+        return { data: state.ownedCustomField, error: null };
+      }
+      // For broader queries (e.g., select all fields for an account), return array
+      if (hasAccountIdFilter && state.ownedCustomField) {
+        return { data: [state.ownedCustomField], error: null };
+      }
       return { data: state.ownedCustomField, error: null };
     }
     if (table === "contact_custom_values") {
@@ -47,7 +60,8 @@ vi.mock("./admin-client", () => {
     if (table === "automation_logs") {
       if (type === "insert") return { data: { id: "log1" }, error: null };
       if (type === "update") return { data: null, error: null };
-      return { data: { steps_executed: [], status: "success" }, error: null };
+      // select returns array (possibly empty)
+      return { data: [], error: null };
     }
     if (table === "automation_steps") return { data: state.steps, error: null };
     return { data: null, error: null };
