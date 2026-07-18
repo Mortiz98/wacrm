@@ -132,7 +132,8 @@ export async function GET(request: Request) {
       const contactName = contact.name || ''
       const planName = planByContact.get(contact.id) || 'tu plan'
 
-      const params = [contactName, planName]
+      // Template is static (no {{1}}, {{2}} params) — send empty params
+      const params: string[] = []
 
       const variants = phoneVariants(sanitized)
       let sentOk = false
