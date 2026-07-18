@@ -83,6 +83,21 @@ export async function GET(request: Request) {
 
     const accessToken = decrypt(config.access_token)
 
+    // Get the template row (includes button definitions)
+    const { data: templateRow } = await admin
+      .from('message_templates')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('name', TEMPLATE_NAME)
+      .eq('language', TEMPLATE_LANGUAGE)
+      .maybeSingle()
+
+    if (!templateRow) {
+      console.error('[gym-cron] template not found in DB:', TEMPLATE_NAME, TEMPLATE_LANGUAGE)
+      skipped += customValues.length
+      continue
+    }
+
     // Resolve the audit user for this account (used for conversation creation)
     let auditUserId: string
     try {
@@ -146,7 +161,10 @@ export async function GET(request: Request) {
             to: v,
             templateName: TEMPLATE_NAME,
             language: TEMPLATE_LANGUAGE,
-            params,
+            template: templateRow,
+            messageParams: {
+              body: params,
+            },
           })
 
           // Store the sent message
