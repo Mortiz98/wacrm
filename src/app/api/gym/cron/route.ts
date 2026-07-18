@@ -139,7 +139,7 @@ export async function GET(request: Request) {
 
           // Store the sent message
           // Find or create conversation
-          const { data: conv } = await admin
+          const { data: conv, error: convSelectErr } = await admin
             .from('conversations')
             .select('id')
             .eq('contact_id', contact.id)
@@ -147,6 +147,10 @@ export async function GET(request: Request) {
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle()
+
+          if (convSelectErr) {
+            console.error('[gym-cron] conversation select error:', convSelectErr.message)
+          }
 
           let conversationId = conv?.id
 
@@ -160,13 +164,15 @@ export async function GET(request: Request) {
               })
               .select('id')
               .single()
-            if (!convErr && newConv) {
+            if (convErr) {
+              console.error('[gym-cron] conversation insert error:', convErr.message)
+            } else if (newConv) {
               conversationId = newConv.id
             }
           }
 
           if (conversationId) {
-            await admin.from('messages').insert({
+            const { error: msgErr } = await admin.from('messages').insert({
               conversation_id: conversationId,
               sender_type: 'bot',
               content_type: 'template',
@@ -176,7 +182,11 @@ export async function GET(request: Request) {
               status: 'sent',
             })
 
-            await admin
+            if (msgErr) {
+              console.error('[gym-cron] message insert error:', msgErr.message)
+            }
+
+            const { error: convUpdateErr } = await admin
               .from('conversations')
               .update({
                 last_message_text: `[template:${TEMPLATE_NAME}]`,
@@ -184,6 +194,12 @@ export async function GET(request: Request) {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', conversationId)
+
+            if (convUpdateErr) {
+              console.error('[gym-cron] conversation update error:', convUpdateErr.message)
+            }
+          } else {
+            console.error('[gym-cron] no conversationId for contact', contact.id)
           }
 
           sentOk = true
