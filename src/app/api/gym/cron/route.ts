@@ -82,7 +82,7 @@ export async function GET(request: Request) {
     const accessToken = decrypt(config.access_token)
 
     // Get plan values for these contacts
-    let planByContact = new Map<string, string>()
+    const planByContact = new Map<string, string>()
     if (planFieldId) {
       const contactIds = customValues.map((cv) => cv.contact_id)
       const { data: planValues } = await admin
