@@ -136,7 +136,19 @@ export async function GET(request: Request) {
     if (!contacts) continue
 
     for (const contact of contacts) {
-      const phone = contact.phone
+      let phone = contact.phone
+
+      // Ensure phone has country code for Meta API
+      if (!phone.startsWith('+')) {
+        // If it starts with 57, just add +
+        if (phone.startsWith('57')) {
+          phone = '+' + phone
+        } else {
+          // Otherwise assume Colombia (+57)
+          phone = '+57' + phone
+        }
+      }
+
       const sanitized = sanitizePhoneForMeta(phone)
       if (!isValidE164(sanitized)) {
         console.error('[gym-cron] invalid phone', phone)
