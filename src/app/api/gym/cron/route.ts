@@ -225,7 +225,7 @@ export async function GET(request: Request) {
             console.log('[gym-cron] inserting message for contact', contact.id, contact.phone)
             
             // Build a preview text from the template body variables
-            const previewText = `¡Hola ${contactName}! Mañana vence tu plan ${planName} en *KORE GYM CLUB*...`
+            const previewText = `¡Hola ${contactName}! 👋\n\nMañana vence tu plan ${planName} en *KORE GYM CLUB*, y queremos agradecerte por permitirnos ser parte de tu proceso.\n\nEsperamos seguir viéndote cumplir tus metas, superar tus límites y disfrutar de la experiencia KORE cada día.\n\nSi necesitas cualquier información, no dudes en escribirnos, o si lo deseas responde este mensaje y renueva tu plan ahora.\n\n¡Nos vemos en el gym! 💪`
 
             try {
               const { error: msgErr } = await admin.from('messages').insert({
