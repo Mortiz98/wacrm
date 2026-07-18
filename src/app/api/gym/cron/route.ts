@@ -206,11 +206,14 @@ export async function GET(request: Request) {
           }
 
           if (conversationId) {
+            // Build a preview text from the template body variables
+            const previewText = `¡Hola ${contactName}! Mañana vence tu plan ${planName} en *KORE GYM CLUB*...`
+
             const { error: msgErr } = await admin.from('messages').insert({
               conversation_id: conversationId,
               sender_type: 'bot',
               content_type: 'template',
-              content_text: null,
+              content_text: previewText,
               template_name: TEMPLATE_NAME,
               message_id: result.messageId,
               status: 'sent',
@@ -225,7 +228,7 @@ export async function GET(request: Request) {
             const { error: convUpdateErr } = await admin
               .from('conversations')
               .update({
-                last_message_text: `[template:${TEMPLATE_NAME}]`,
+                last_message_text: previewText,
                 last_message_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               })

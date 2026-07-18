@@ -57,6 +57,12 @@ interface WhatsAppMessage {
     button_reply?: { id: string; title: string }
     list_reply?: { id: string; title: string; description?: string }
   }
+  /**
+   * Legacy button reply format. Meta sends this when the customer taps
+   * a QUICK_REPLY button on a template message. The payload carries the
+   * button's id and title directly.
+   */
+  button?: { text: string; payload: string }
   /** Present when the customer swipe-replies to one of our messages. */
   context?: { id: string }
 }
@@ -965,6 +971,22 @@ async function parseMessageContent(
         }
       }
       return { ...empty, contentText: '[Interactive reply]' }
+    }
+
+    case 'button': {
+      // Legacy QUICK_REPLY button tap on a template message. Meta
+      // delivers the button text and payload directly under `button`.
+      // Treat it like an interactive reply so the Flows engine and
+      // inbox bubble render it correctly.
+      const btn = message.button
+      if (btn?.payload) {
+        return {
+          ...empty,
+          contentText: btn.text || btn.payload,
+          interactiveReplyId: btn.payload,
+        }
+      }
+      return { ...empty, contentText: btn?.text || '[Button reply]' }
     }
 
     default:
