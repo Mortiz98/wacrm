@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/automations/admin-client'
 import { sendTemplateMessage } from '@/lib/whatsapp/meta-api'
 import { decrypt } from '@/lib/whatsapp/encryption'
 import { sanitizePhoneForMeta, isValidE164, phoneVariants, isRecipientNotAllowedError } from '@/lib/whatsapp/phone-utils'
+import { resolveAuditUserId } from '@/lib/api/v1/contacts'
 
 export const maxDuration = 60
 
@@ -81,6 +82,16 @@ export async function GET(request: Request) {
     }
 
     const accessToken = decrypt(config.access_token)
+
+    // Resolve the audit user for this account (used for conversation creation)
+    let auditUserId: string
+    try {
+      auditUserId = await resolveAuditUserId(admin, accountId)
+    } catch (err) {
+      console.error('[gym-cron] cannot resolve audit user for account', accountId, err)
+      skipped += customValues.length
+      continue
+    }
 
     // Get plan values for these contacts
     const planByContact = new Map<string, string>()
@@ -161,7 +172,7 @@ export async function GET(request: Request) {
               .from('conversations')
               .insert({
                 account_id: accountId,
-                user_id: contact.account_id,
+                user_id: auditUserId,
                 contact_id: contact.id,
               })
               .select('id')
