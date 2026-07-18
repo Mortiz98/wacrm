@@ -247,6 +247,7 @@ export async function GET(request: Request) {
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err)
+          console.error('[gym-cron] Meta API error for contact', contact.id, contact.phone, 'Error:', msg)
           if (!isRecipientNotAllowedError(msg)) {
             lastError = err
             break
