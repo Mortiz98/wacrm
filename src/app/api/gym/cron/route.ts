@@ -175,10 +175,7 @@ export async function GET(request: Request) {
             to: v,
             templateName: TEMPLATE_NAME,
             language: TEMPLATE_LANGUAGE,
-            template: templateRow,
-            messageParams: {
-              body: params,
-            },
+            params,
           })
           
           console.log('[gym-cron] template sent successfully, messageId:', result.messageId)
