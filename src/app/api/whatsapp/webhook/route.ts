@@ -86,6 +86,12 @@ interface WhatsAppWebhookEntry {
         status: string
         timestamp: string
         recipient_id: string
+        errors?: Array<{
+          code: string
+          title: string
+          message: string
+          error_data?: { details?: string }
+        }>
       }>
     }
     field: string
@@ -360,7 +366,25 @@ async function handleStatusUpdate(status: {
   status: string
   timestamp: string
   recipient_id: string
+  errors?: Array<{
+    code: string
+    title: string
+    message: string
+    error_data?: { details?: string }
+  }>
 }) {
+  // Log failed deliveries with Meta's error details
+  if (status.status === 'failed' && status.errors?.length) {
+    for (const err of status.errors) {
+      console.error('[webhook] Meta delivery failed:', {
+        messageId: status.id,
+        errorCode: err.code,
+        errorTitle: err.title,
+        errorMessage: err.message,
+        errorDetails: err.error_data?.details,
+      })
+    }
+  }
   // 1) Mirror onto messages (legacy behavior) — Meta's status values
   //    already match the CHECK constraint on messages.status. No
   //    `.select()`: message_id is NOT unique (migration 009 — Meta ids
