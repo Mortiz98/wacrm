@@ -43,6 +43,7 @@ export interface ApiMessage {
   status: string;
   reply_to_message_id: string | null;
   interactive_reply_id: string | null;
+  interactive_payload?: import('@/lib/whatsapp/interactive').InteractiveMessagePayload | null;
   created_at: string;
 }
 
@@ -95,6 +96,7 @@ export function serializeMessage(m: Message): ApiMessage {
     status: m.status,
     reply_to_message_id: m.reply_to_message_id ?? null,
     interactive_reply_id: m.interactive_reply_id ?? null,
+    interactive_payload: m.interactive_payload ?? null,
     created_at: m.created_at,
   };
 }
