@@ -228,6 +228,7 @@ export async function GET(request: Request) {
               .replace(/\{\{2\}\}/g, planName)
 
             // Build interactive payload from template buttons
+            console.log('[gym-cron] templateRow.buttons:', JSON.stringify(templateRow.buttons))
             const interactivePayload = templateRow.buttons?.length
               ? {
                   kind: 'buttons' as const,
@@ -238,6 +239,7 @@ export async function GET(request: Request) {
                   })),
                 }
               : undefined
+            console.log('[gym-cron] interactivePayload:', JSON.stringify(interactivePayload))
 
             try {
               const { error: msgErr } = await admin.from('messages').insert({
