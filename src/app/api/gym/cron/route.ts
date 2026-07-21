@@ -222,8 +222,10 @@ export async function GET(request: Request) {
           if (conversationId) {
             console.log('[gym-cron] inserting message for contact', contact.id, contact.phone)
             
-            // Build a preview text from the template body variables
-            const previewText = `¡Hola ${contactName}! 👋\n\nMañana vence tu plan ${planName} en *KORE GYM CLUB*, y queremos agradecerte por permitirnos ser parte de tu proceso.\n\nEsperamos seguir viéndote cumplir tus metas, superar tus límites y disfrutar de la experiencia KORE cada día.\n\nSi necesitas cualquier información, no dudes en escribirnos, o si lo deseas responde este mensaje y renueva tu plan ahora.\n\n¡Nos vemos en el gym! 💪`
+            // Build preview text from template body_text, replacing {{1}} and {{2}}
+            const previewText = templateRow.body_text
+              .replace(/\{\{1\}\}/g, contactName)
+              .replace(/\{\{2\}\}/g, planName)
 
             // Build interactive payload from template buttons
             const interactivePayload = templateRow.buttons?.length
