@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/gym/cron",
-      "schedule": "53 22 * * *"
+      "schedule": "0 23 * * *"
     }
   ]
 }

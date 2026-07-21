@@ -6,8 +6,8 @@ on:
     - cron: '*/5 * * * *'
     # Flows: cada hora
     - cron: '0 * * * *'
-    # Gym cron: 5:53 PM Colombia (22:53 UTC)
-    - cron: '53 22 * * *'
+    # Gym cron: 6:00 PM Colombia (23:00 UTC)
+    - cron: '0 23 * * *'
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
 
   gym-cron:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '53 22 * * *'
+    if: github.event.schedule == '0 23 * * *'
     steps:
       - name: Trigger gym cron
         run: |

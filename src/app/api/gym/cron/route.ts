@@ -4,6 +4,7 @@ import { sendTemplateMessage } from '@/lib/whatsapp/meta-api'
 import { decrypt } from '@/lib/whatsapp/encryption'
 import { sanitizePhoneForMeta, isValidE164, phoneVariants, isRecipientNotAllowedError } from '@/lib/whatsapp/phone-utils'
 import { resolveAuditUserId } from '@/lib/api/v1/contacts'
+import type { TemplateButton } from '@/types'
 
 export const maxDuration = 60
 
@@ -232,7 +233,7 @@ export async function GET(request: Request) {
               ? {
                   kind: 'buttons' as const,
                   body: previewText,
-                  buttons: templateRow.buttons.map((btn, idx) => ({
+                  buttons: templateRow.buttons.map((btn: TemplateButton, idx: number) => ({
                     id: `btn_${idx}`,
                     title: btn.text,
                   })),
