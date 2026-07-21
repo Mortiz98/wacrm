@@ -6,8 +6,6 @@ on:
     - cron: '*/5 * * * *'
     # Flows: cada hora
     - cron: '0 * * * *'
-    # Gym cron: 6:00 PM Colombia (23:00 UTC)
-    - cron: '0 23 * * *'
   workflow_dispatch:
 
 jobs:
@@ -28,15 +26,5 @@ jobs:
       - name: Trigger flows cron
         run: |
           curl -f -X GET "${{ secrets.PRODUCTION_URL }}/api/flows/cron" \
-            -H "x-cron-secret: ${{ secrets.AUTOMATION_CRON_SECRET }}" \
-            -H "Content-Type: application/json"
-
-  gym-cron:
-    runs-on: ubuntu-latest
-    if: github.event.schedule == '0 23 * * *'
-    steps:
-      - name: Trigger gym cron
-        run: |
-          curl -f -X GET "${{ secrets.PRODUCTION_URL }}/api/gym/cron" \
             -H "x-cron-secret: ${{ secrets.AUTOMATION_CRON_SECRET }}" \
             -H "Content-Type: application/json"
