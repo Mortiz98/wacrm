@@ -24,7 +24,7 @@ export function InteractivePreview({
   return (
     <div
       className={cn(
-        "w-full max-w-[260px] overflow-hidden rounded-lg bg-card text-foreground shadow-sm ring-1 ring-border",
+        "w-full max-w-[260px] overflow-hidden rounded-lg bg-white/10 text-foreground",
         className,
       )}
     >
@@ -36,24 +36,24 @@ export function InteractivePreview({
         ) : null}
         <p className="whitespace-pre-wrap break-words text-sm">
           {payload.body || (
-            <span className="text-muted-foreground">Message body…</span>
+            <span className="text-white/60">Message body…</span>
           )}
         </p>
         {payload.footer ? (
-          <p className="mt-1 break-words text-[11px] text-muted-foreground">
+          <p className="mt-1 break-words text-[11px] text-white/50">
             {payload.footer}
           </p>
         ) : null}
       </div>
 
       {payload.kind === "buttons" ? (
-        <div className="flex flex-col border-t border-border">
+        <div className="flex flex-col">
           {payload.buttons.map((b, i) => (
             <button
               key={b.id || i}
               type="button"
               disabled
-              className="flex items-center justify-center gap-1.5 border-t border-border py-2 text-sm font-medium text-primary first:border-t-0"
+              className="flex items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-primary first:border-t-0"
             >
               <Reply className="h-3.5 w-3.5" />
               <span className="truncate">{b.title || "Button"}</span>
@@ -64,7 +64,7 @@ export function InteractivePreview({
         <button
           type="button"
           disabled
-          className="flex w-full items-center justify-center gap-1.5 border-t border-border py-2 text-sm font-medium text-primary"
+          className="flex w-full items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-primary"
         >
           <List className="h-3.5 w-3.5" />
           <span className="truncate">{payload.button_label || "Menu"}</span>
