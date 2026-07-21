@@ -53,7 +53,7 @@ export function InteractivePreview({
               key={b.id || i}
               type="button"
               disabled
-              className="flex items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-primary first:border-t-0"
+              className="flex items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-white first:border-t-0"
             >
               <Reply className="h-3.5 w-3.5" />
               <span className="truncate">{b.title || "Button"}</span>
@@ -64,7 +64,7 @@ export function InteractivePreview({
         <button
           type="button"
           disabled
-          className="flex w-full items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-primary"
+          className="flex w-full items-center justify-center gap-1.5 border-t border-white/20 py-2 text-sm font-medium text-white"
         >
           <List className="h-3.5 w-3.5" />
           <span className="truncate">{payload.button_label || "Menu"}</span>
