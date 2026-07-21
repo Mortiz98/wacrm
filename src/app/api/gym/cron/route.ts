@@ -225,6 +225,18 @@ export async function GET(request: Request) {
             // Build a preview text from the template body variables
             const previewText = `¡Hola ${contactName}! 👋\n\nMañana vence tu plan ${planName} en *KORE GYM CLUB*, y queremos agradecerte por permitirnos ser parte de tu proceso.\n\nEsperamos seguir viéndote cumplir tus metas, superar tus límites y disfrutar de la experiencia KORE cada día.\n\nSi necesitas cualquier información, no dudes en escribirnos, o si lo deseas responde este mensaje y renueva tu plan ahora.\n\n¡Nos vemos en el gym! 💪`
 
+            // Build interactive payload from template buttons
+            const interactivePayload = templateRow.buttons?.length
+              ? {
+                  kind: 'buttons' as const,
+                  body: previewText,
+                  buttons: templateRow.buttons.map((btn: any, idx: number) => ({
+                    id: `btn_${idx}`,
+                    title: btn.text,
+                  })),
+                }
+              : undefined
+
             try {
               const { error: msgErr } = await admin.from('messages').insert({
                 conversation_id: conversationId,
@@ -232,6 +244,7 @@ export async function GET(request: Request) {
                 content_type: 'template',
                 content_text: previewText,
                 template_name: TEMPLATE_NAME,
+                interactive_payload: interactivePayload,
                 message_id: result.messageId,
                 status: 'sent',
               })
