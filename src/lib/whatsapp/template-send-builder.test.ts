@@ -205,7 +205,11 @@ describe('buildSendComponents — buttons', () => {
       }),
       { buttonParams: { 2: 'ORD-42' } },
     );
-    const urlBtn = components.find((c) => c.type === 'button');
+    // QUICK_REPLY buttons are always included now, plus the URL button
+    expect(components.length).toBe(3);
+    const urlBtn = components.find(
+      (c) => c.type === 'button' && c.sub_type === 'url',
+    );
     expect(urlBtn).toEqual({
       type: 'button',
       sub_type: 'url',
@@ -269,9 +273,17 @@ describe('buildSendComponents — end-to-end mix', () => {
       }),
       { body: ['John'], buttonParams: { 1: 'abc' } },
     );
-    expect(components.map((c) => c.type)).toEqual(['header', 'body', 'button']);
-    // QUICK_REPLY at index 0 doesn't need send-time params, so only the
-    // URL button at index 1 emits a component.
-    expect((components[2] as { index: string }).index).toBe('1');
+    // QUICK_REPLY is always included, plus the URL button
+    expect(components.map((c) => c.type)).toEqual([
+      'header',
+      'body',
+      'button',
+      'button',
+    ]);
+    // URL button at index 1
+    const urlBtn = components.find(
+      (c) => c.type === 'button' && c.sub_type === 'url',
+    );
+    expect((urlBtn as { index: string }).index).toBe('1');
   });
 });
