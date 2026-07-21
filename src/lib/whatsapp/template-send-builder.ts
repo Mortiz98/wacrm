@@ -157,6 +157,10 @@ function buttonNeedsSendParam(
       // template's example as a default).
       return true;
     case 'QUICK_REPLY':
+      // Meta requires QUICK_REPLY button components in the send
+      // payload even when there's no variable — the payload is
+      // the button text itself.
+      return true;
     case 'PHONE_NUMBER':
       return override !== undefined;
   }
@@ -195,13 +199,16 @@ function buildButtonComponent(
       };
     }
     case 'QUICK_REPLY': {
-      // Only included when the caller explicitly overrides the
-      // payload (rare — usually QR buttons use their default text).
+      // Meta requires the payload at send time. Use the override
+      // if provided, otherwise fall back to the button's text
+      // (which is the most common case — the payload matches
+      // what the user sees).
+      const payload = override ?? button.text;
       return {
         type: 'button',
         sub_type: 'quick_reply',
         index: String(index),
-        parameters: [{ type: 'payload', payload: override! }],
+        parameters: [{ type: 'payload', payload }],
       };
     }
     case 'PHONE_NUMBER':
