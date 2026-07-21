@@ -98,6 +98,14 @@ export async function GET(request: Request) {
       continue
     }
 
+    console.log('[gym-cron] template row:', JSON.stringify({
+      id: templateRow.id,
+      name: templateRow.name,
+      language: templateRow.language,
+      buttons: templateRow.buttons,
+      body_text: templateRow.body_text?.slice(0, 100),
+    }))
+
     // Resolve the audit user for this account (used for conversation creation)
     let auditUserId: string
     try {
