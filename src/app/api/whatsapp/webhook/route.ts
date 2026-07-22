@@ -794,13 +794,14 @@ async function processMessage(
   // Content-level triggers are suppressed when a flow consumed the
   // message — see the comment block above.
   if (!flowConsumed) {
-    automationTriggers.push('new_message_received', 'keyword_match')
-    // Interactive tap → fire the interactive_reply trigger too (only
-    // meaningful when a button/list reply actually arrived). Enables
-    // automation-only chained menus; when a Flow owns the menu it will
-    // have consumed the reply and this is skipped.
+    automationTriggers.push('new_message_received')
     if (interactiveReplyId) {
+      // Button/list tap → only fire interactive_reply, NOT keyword_match.
+      // Prevents double-firing when the button text happens to match a
+      // keyword automation (e.g. "Cambiar el plan" matching a "plan" keyword).
       automationTriggers.push('interactive_reply')
+    } else {
+      automationTriggers.push('keyword_match')
     }
   }
   // new_contact_created fires only when the webhook just auto-created the
