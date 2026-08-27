@@ -56,8 +56,15 @@ export async function GET(request: Request) {
       .select('contact_id, value')
       .eq('custom_field_id', fechaFieldId)
       .lt('value', cutoffStr)
+      .like('value', '____-__-__')
 
     if (cvErr || !customValues || customValues.length === 0) continue
+
+    // Filter to only valid date values (YYYY-MM-DD) to avoid sending to
+    // contacts with non-date values like "N/A", empty strings, etc.
+    const validDateRegex = /^\d{4}-\d{2}-\d{2}$/
+    const datedValues = customValues.filter((cv) => validDateRegex.test(cv.value))
+    if (datedValues.length === 0) continue
 
     // Get WhatsApp config for this account
     const { data: config, error: configErr } = await admin
@@ -68,7 +75,7 @@ export async function GET(request: Request) {
 
     if (configErr || !config) {
       console.error('[gym-ausentes] no WhatsApp config for account', accountId)
-      skipped += customValues.length
+      skipped += datedValues.length
       continue
     }
 
@@ -85,7 +92,7 @@ export async function GET(request: Request) {
 
     if (!templateRow) {
       console.error('[gym-ausentes] template not found in DB:', TEMPLATE_NAME, TEMPLATE_LANGUAGE)
-      skipped += customValues.length
+      skipped += datedValues.length
       continue
     }
 
@@ -95,11 +102,11 @@ export async function GET(request: Request) {
       auditUserId = await resolveAuditUserId(admin, accountId)
     } catch (err) {
       console.error('[gym-ausentes] cannot resolve audit user for account', accountId, err)
-      skipped += customValues.length
+      skipped += datedValues.length
       continue
     }
 
-    const contactIds = customValues.map((cv) => cv.contact_id)
+    const contactIds = datedValues.map((cv) => cv.contact_id)
 
     // Fetch contact details
     const { data: contacts } = await admin
