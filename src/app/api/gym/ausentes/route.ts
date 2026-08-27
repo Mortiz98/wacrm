@@ -126,15 +126,10 @@ export async function GET(request: Request) {
       if (c?.contact_id) alreadySentContacts.add(c.contact_id)
     }
 
-    for (const contact of contacts) {
-      if (alreadySentContacts.has(contact.id)) {
-        skipped++
-        continue
-      }
+    async function sendToContact(contact: { id: string; phone: string; name: string | null }): Promise<'sent' | 'skipped' | 'failed'> {
+      if (alreadySentContacts.has(contact.id)) return 'skipped'
 
       let phone = contact.phone
-
-      // Ensure phone has country code for Meta API
       if (!phone.startsWith('+')) {
         if (phone.startsWith('57')) {
           phone = '+' + phone
@@ -146,21 +141,15 @@ export async function GET(request: Request) {
       const sanitized = sanitizePhoneForMeta(phone)
       if (!isValidE164(sanitized)) {
         console.error('[gym-ausentes] invalid phone', phone)
-        failed++
-        continue
+        return 'failed'
       }
 
       const contactName = contact.name || ''
       const params = [contactName]
-
       const variants = phoneVariants(sanitized)
-      let sentOk = false
-      let lastError: unknown = null
 
       for (const v of variants) {
         try {
-          console.log('[gym-ausentes] sending template to contact', contact.id, 'phone:', v)
-
           const result = await sendTemplateMessage({
             phoneNumberId: config.phone_number_id,
             accessToken,
@@ -171,10 +160,7 @@ export async function GET(request: Request) {
             template: templateRow,
           })
 
-          console.log('[gym-ausentes] template sent successfully, messageId:', result.messageId)
-
-          // Find or create conversation
-          const { data: conv, error: convSelectErr } = await admin
+          const { data: conv } = await admin
             .from('conversations')
             .select('id')
             .eq('contact_id', contact.id)
@@ -183,14 +169,10 @@ export async function GET(request: Request) {
             .limit(1)
             .maybeSingle()
 
-          if (convSelectErr) {
-            console.error('[gym-ausentes] conversation select error:', convSelectErr.message)
-          }
-
           let conversationId = conv?.id
 
           if (!conversationId) {
-            const { data: newConv, error: convErr } = await admin
+            const { data: newConv } = await admin
               .from('conversations')
               .insert({
                 account_id: accountId,
@@ -199,19 +181,12 @@ export async function GET(request: Request) {
               })
               .select('id')
               .single()
-            if (convErr) {
-              console.error('[gym-ausentes] conversation insert error:', convErr.message, convErr.details)
-            } else if (newConv) {
-              conversationId = newConv.id
-            }
+            if (newConv) conversationId = newConv.id
           }
 
           if (conversationId) {
-            // Build preview text from template body_text, replacing {{1}}
-            const previewText = templateRow.body_text
-              .replace(/\{\{1\}\}/g, contactName)
+            const previewText = templateRow.body_text.replace(/\{\{1\}\}/g, contactName)
 
-            // Build interactive payload from template buttons
             const interactivePayload = templateRow.buttons?.length
               ? {
                   kind: 'buttons' as const,
@@ -235,7 +210,7 @@ export async function GET(request: Request) {
             })
 
             if (msgErr) {
-              console.error('[gym-ausentes] message insert error:', msgErr.message, msgErr.details)
+              console.error('[gym-ausentes] message insert error:', msgErr.message)
               continue
             }
 
@@ -248,29 +223,27 @@ export async function GET(request: Request) {
               })
               .eq('id', conversationId)
 
-            sentOk = true
-            sent++
-            console.log('[gym-ausentes] marked as sent for contact', contact.id)
-            break
+            return 'sent'
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err)
-          console.error('[gym-ausentes] Meta API error for contact', contact.id, contact.phone, 'Error:', msg)
-          if (!isRecipientNotAllowedError(msg)) {
-            lastError = err
-            break
-          }
-          lastError = err
+          if (!isRecipientNotAllowedError(msg)) break
         }
       }
 
-      if (!sentOk) {
-        failed++
-        console.error('[gym-ausentes] send failed for', contact.id, lastError)
-      }
+      return 'failed'
+    }
 
-      // Small delay to avoid rate limiting
-      await new Promise((r) => setTimeout(r, 500))
+    // Process contacts in parallel batches of 5
+    const batchSize = 5
+    for (let i = 0; i < contacts.length; i += batchSize) {
+      const batch = contacts.slice(i, i + batchSize)
+      const results = await Promise.all(batch.map(sendToContact))
+      for (const r of results) {
+        if (r === 'sent') sent++
+        else if (r === 'skipped') skipped++
+        else failed++
+      }
     }
   }
 
