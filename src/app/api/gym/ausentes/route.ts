@@ -9,7 +9,7 @@ import type { TemplateButton } from '@/types'
 export const maxDuration = 60
 
 const TEMPLATE_NAME = 'ausente_promo_90k'
-const TEMPLATE_LANGUAGE = 'es_CO'
+const TEMPLATE_LANGUAGE = 'es_MX'
 const ABSENT_DAYS = 30
 
 export async function GET(request: Request) {
