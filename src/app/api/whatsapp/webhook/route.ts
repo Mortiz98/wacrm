@@ -1051,12 +1051,30 @@ async function findOrCreateContact(
   )
 
   if (existingContact) {
-    // Update name if it changed
-    if (name && name !== existingContact.name) {
+    // Update name and/or phone if changed or missing. This fixes the
+    // case where a contact was created manually or via CSV without a
+    // phone number — when they later send a message, we fill in the
+    // phone so replies work (issue: "numero no encontrado").
+    const needsUpdate =
+      (name && name !== existingContact.name) ||
+      (phone && (!existingContact.phone || existingContact.phone !== phone))
+
+    if (needsUpdate) {
       await supabaseAdmin()
         .from('contacts')
-        .update({ name, updated_at: new Date().toISOString() })
+        .update({
+          name: name || existingContact.name,
+          phone: phone || existingContact.phone,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', existingContact.id)
+      // Re-fetch to return the updated row
+      const { data: updated } = await supabaseAdmin()
+        .from('contacts')
+        .select('*')
+        .eq('id', existingContact.id)
+        .single()
+      return { contact: updated ?? existingContact, wasCreated: false }
     }
     return { contact: existingContact, wasCreated: false }
   }

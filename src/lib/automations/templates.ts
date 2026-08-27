@@ -10,6 +10,7 @@ export type TemplateSlug =
   | 'out_of_office'
   | 'lead_qualifier'
   | 'follow_up_reminder'
+  | 'renovar_ahora_response'
 
 export interface TemplateStepSeed {
   step_type: AutomationStepType
@@ -121,6 +122,26 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
         step_config: {
           text:
             "Just circling back — did you have any other questions for us? Happy to help!",
+        },
+      },
+    ],
+  },
+  renovar_ahora_response: {
+    slug: 'renovar_ahora_response',
+    name: 'Renovar Ahora - Respuesta',
+    description:
+      'Responde con la info de transferencia cuando un contacto toca el botón "Renovar ahora" del template de ausentes.',
+    trigger_type: 'keyword_match',
+    trigger_config: {
+      keywords: ['Renovar ahora'],
+      match_type: 'exact',
+      case_sensitive: false,
+    },
+    steps: [
+      {
+        step_type: 'send_message',
+        step_config: {
+          text: '¡Perfecto! 💪\n\nPara renovar tu plan, puedes hacer la transferencia a:\n\n🏦 Bancolombia\n💳 Cuenta de Ahorros: 91211768733\n🔑 Llave: @koregym\n\nEnvianos el comprobante por este chat y activamos tu membresía al instante.',
         },
       },
     ],
