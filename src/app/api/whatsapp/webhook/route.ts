@@ -612,8 +612,15 @@ async function processMessage(
   // See parseMessageContent for what it turns off.
   mirrorMedia: boolean
 ) {
-  const senderPhone = normalizePhone(message.from)
+  // Use message.from first, fallback to contact.wa_id (always present from Meta)
+  const senderPhone = normalizePhone(message.from || contact.wa_id)
   const contactName = contact.profile.name
+
+  // Don't create contacts without a phone number
+  if (!senderPhone) {
+    console.error('[webhook] No phone number available for contact:', contactName)
+    return
+  }
 
   // Find or create contact
   const contactOutcome = await findOrCreateContact(
